@@ -1,47 +1,37 @@
 package com.example.plugins
 
+import com.example.session.Session
+import com.example.session.validate
 import io.ktor.server.auth.*
 import io.ktor.util.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
+import java.nio.charset.StandardCharsets
+import java.util.*
 
 fun Application.configureSecurity() {
-
     authentication {
-        basic(name = "myauth1") {
-            realm = "Ktor Server"
+        basic(name = "session") {
+            realm = "LoginRealm"
             validate { credentials ->
-                if (credentials.name == credentials.password) {
+                val token = String(Base64.getDecoder().decode(credentials.password), StandardCharsets.UTF_8)
+                if (Session.validate(credentials.name.toInt(), token)) {
                     UserIdPrincipal(credentials.name)
                 } else {
                     null
                 }
             }
         }
-
-        form(name = "myauth2") {
-            userParamName = "user"
-            passwordParamName = "password"
-            challenge {
-                /**/
-            }
-        }
     }
 
-    routing {
-        authenticate("myauth1") {
+    /*routing {
+        authenticate("session") {
             get("/protected/route/basic") {
                 val principal = call.principal<UserIdPrincipal>()!!
                 call.respondText("Hello ${principal.name}")
             }
         }
-        authenticate("myauth2") {
-            get("/protected/route/form") {
-                val principal = call.principal<UserIdPrincipal>()!!
-                call.respondText("Hello ${principal.name}")
-            }
-        }
-    }
+    }*/
 }

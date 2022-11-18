@@ -34,4 +34,7 @@ dependencies {
     // json response
     implementation("io.ktor:ktor-server-content-negotiation:$ktor_version")
     implementation("io.ktor:ktor-serialization-gson:$ktor_version")
+
+    // bcrypt
+    implementation("org.mindrot:jbcrypt:0.4")
 }

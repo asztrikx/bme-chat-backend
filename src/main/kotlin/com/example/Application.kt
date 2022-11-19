@@ -1,14 +1,16 @@
 package com.example
 
-import com.example.plugins.*
+import com.example.plugins.configureRouting
+import com.example.plugins.configureSecurity
 import io.ktor.serialization.gson.*
 import io.ktor.server.application.*
-import io.ktor.server.auth.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.websocket.*
 import org.ktorm.database.Database
 import java.text.DateFormat
+import java.time.Duration
 
 // Entities are avoided as they don't work with serialization
 
@@ -18,6 +20,13 @@ val database = Database.connect(
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
+        install(WebSockets) {
+            pingPeriod = Duration.ofSeconds(15)
+            timeout = Duration.ofSeconds(15)
+            maxFrameSize = Long.MAX_VALUE
+            masking = false
+            contentConverter = GsonWebsocketContentConverter()
+        } // routing uses this, so it has to be installed earlier...
         configureSecurity()
         configureRouting()
         install(ContentNegotiation) {

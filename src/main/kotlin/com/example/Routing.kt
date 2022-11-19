@@ -5,6 +5,7 @@ import com.example.login.login
 import com.example.logout.logout
 import com.example.message.message
 import com.example.register.register
+import com.example.websocket.websocket
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.routing.*
@@ -19,6 +20,9 @@ fun Application.configureRouting() {
             }
             login()
             register()
+        }
+        authenticate("session") {
+            websocket()
         }
     }
 }

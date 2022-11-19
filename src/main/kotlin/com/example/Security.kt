@@ -25,13 +25,4 @@ fun Application.configureSecurity() {
             }
         }
     }
-
-    /*routing {
-        authenticate("session") {
-            get("/protected/route/basic") {
-                val principal = call.principal<UserIdPrincipal>()!!
-                call.respondText("Hello ${principal.name}")
-            }
-        }
-    }*/
 }

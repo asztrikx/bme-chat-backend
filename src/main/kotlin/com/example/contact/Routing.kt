@@ -3,13 +3,12 @@ package com.example.contact
 import com.example.database
 import com.example.message.MessageSchema
 import com.example.user.UserSchema
+import com.example.websocket.WebsocketsManager
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.websocket.*
-import org.ktorm.*
 import org.ktorm.dsl.*
 import kotlin.math.max as mathMax
 import kotlin.math.min as mathMin
@@ -82,7 +81,7 @@ fun Route.contact() {
 
 			val rows = database
 				.from(UserSchema)
-				.select(UserSchema.id)
+				.select(UserSchema.id, UserSchema.username)
 				.where {
 					UserSchema.username eq username
 				}
@@ -95,6 +94,7 @@ fun Route.contact() {
 
 			val row = rows.next()
 			val newContactUserId = row[UserSchema.id]!!
+			val newContactUsername = row[UserSchema.username]!!
 
 			if (userId == newContactUserId) {
 				call.respond(ContactPostResponse("""You can't add yourself 😬"""))
@@ -124,7 +124,21 @@ fun Route.contact() {
 
 			call.respond(ContactPostResponse(null))
 
-			)))
+			WebsocketsManager.notifyContact(userId1, userId2,
+				ContactBrief(
+					contactId,
+					username,
+					userId,
+					"",
+					"",
+				), ContactBrief(
+					contactId,
+					newContactUsername,
+					newContactUserId,
+					"",
+					"",
+				)
+			)
 		}
 	}
 }

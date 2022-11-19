@@ -1,7 +1,6 @@
 package com.example.contact
 
 import com.example.database
-import com.example.login.LoginRequest
 import com.example.message.MessageSchema
 import com.example.user.UserSchema
 import io.ktor.server.application.*
@@ -9,8 +8,11 @@ import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.pipeline.*
+import io.ktor.server.websocket.*
+import org.ktorm.*
 import org.ktorm.dsl.*
+import kotlin.math.max as mathMax
+import kotlin.math.min as mathMin
 
 // Ktor doesn't interpret String JSONs correctly
 suspend fun ApplicationCall.receiveString(): String {
@@ -25,18 +27,30 @@ fun Route.contact() {
 			val userId = principal.name.toInt()
 
 			val rows = database
-				.from(ContactSchema)
-				.innerJoin(UserSchema, on = UserSchema.id eq ContactSchema.userId2)
-				.select(ContactSchema.id, ContactSchema.userId2, UserSchema.name)
+				.from(UserSchema)
+				.innerJoin(ContactSchema, on =
+					(UserSchema.id eq ContactSchema.userId1) or (UserSchema.id eq ContactSchema.userId2)
+				)
+				.select(ContactSchema.id, ContactSchema.userId1, ContactSchema.userId2)
 				.where {
-					ContactSchema.userId1 eq userId
+					UserSchema.id eq userId
 				}
 
 			val contactBriefs = mutableListOf<ContactBrief>()
 			for (row in rows) {
 				val contactId = row[ContactSchema.id]!!
-				val otherUserId = row[ContactSchema.userId2]!!
-				val name = row[UserSchema.name]!!
+				val userId1 = row[ContactSchema.userId1]!!
+				val userId2 = row[ContactSchema.userId2]!!
+				val otherUserId = if (userId1 == userId) userId2 else userId1
+
+				// Ktorm has some bugs with alias joining, therefore use different query (https://www.ktorm.org/en/joining.html)
+				val name = database
+					.from(UserSchema)
+					.select(UserSchema.name)
+					.where {
+						UserSchema.id eq otherUserId
+					}
+					.iterator().next()[UserSchema.name]!!
 
 				// Ktorm doesn't support nested joins
 				val messageRows = database
@@ -46,7 +60,7 @@ fun Route.contact() {
 						MessageSchema.contactId eq contactId
 					}
 					.orderBy(MessageSchema.id.desc())
-					//limit not supported
+					//limit not supported in SQLite
 					.iterator()
 
 				contactBriefs += if (!messageRows.hasNext()) {
@@ -75,7 +89,7 @@ fun Route.contact() {
 				.iterator()
 
 			if (!rows.hasNext()) {
-				call.respond(ContactPostResponse("Username doesn't exists.", null))
+				call.respond<ContactPostResponse>(ContactPostResponse("Username doesn't exists."))
 				return@post
 			}
 
@@ -83,32 +97,32 @@ fun Route.contact() {
 			val newContactUserId = row[UserSchema.id]!!
 
 			if (userId == newContactUserId) {
-				call.respond(ContactPostResponse("""You can't add yourself 😬""", null))
+				call.respond(ContactPostResponse("""You can't add yourself 😬"""))
 				return@post
 			}
 
-			database.useTransaction {
+			val userId1 = mathMin(userId, newContactUserId)
+			val userId2 = mathMax(userId, newContactUserId)
+			val contactId = database.useTransaction {
 				val recordCount = database
 					.from(ContactSchema)
 					.select(ContactSchema.id)
 					.where {
-						(ContactSchema.userId1 eq userId) and (ContactSchema.userId2 eq newContactUserId)
+						(ContactSchema.userId1 eq userId1) and (ContactSchema.userId2 eq userId2)
 					}
 					.totalRecords
 				if (recordCount != 0) {
-					call.respond(ContactPostResponse("User already in contacts.", null))
+					call.respond(ContactPostResponse("User already in contacts."))
 					return@post
 				}
 
-				database.batchInsert(ContactSchema) {
-					item {
-						set(it.userId1, userId)
-						set(it.userId2, newContactUserId)
-					}
+				database.insert(ContactSchema) {
+					set(it.userId1, userId1)
+					set(it.userId2, userId2)
 				}
 			}
 
-			call.respond(ContactPostResponse(null, ContactBrief(
+			call.respond(ContactPostResponse(null))
 
 			)))
 		}

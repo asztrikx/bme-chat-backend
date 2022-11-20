@@ -77,13 +77,13 @@ fun Route.contact() {
 		post {
 			val principal = call.principal<UserIdPrincipal>()!!
 			val userId = principal.name.toInt()
-			val username = call.receiveString()
+			val newContactUsername = call.receiveString()
 
 			val rows = database
 				.from(UserSchema)
-				.select(UserSchema.id, UserSchema.username)
+				.select(UserSchema.id, UserSchema.name)
 				.where {
-					UserSchema.username eq username
+					UserSchema.username eq newContactUsername
 				}
 				.iterator()
 
@@ -94,7 +94,7 @@ fun Route.contact() {
 
 			val row = rows.next()
 			val newContactUserId = row[UserSchema.id]!!
-			val newContactUsername = row[UserSchema.username]!!
+			val newContactName = row[UserSchema.name]!!
 
 			if (userId == newContactUserId) {
 				call.respond(ContactPostResponse("""You can't add yourself 😬"""))
@@ -120,20 +120,39 @@ fun Route.contact() {
 					set(it.userId1, userId1)
 					set(it.userId2, userId2)
 				}
+
+				database
+					.from(ContactSchema)
+					.select(ContactSchema.id)
+					.where {
+						(ContactSchema.userId1 eq userId1) and
+						(ContactSchema.userId2 eq userId2)
+					}
+					.iterator()
+					.next()[ContactSchema.id]!!
 			}
 
 			call.respond(ContactPostResponse(null))
 
+			val name = database
+				.from(UserSchema)
+				.select(UserSchema.name)
+				.where {
+					UserSchema.id eq userId
+				}
+				.iterator()
+				.next()[UserSchema.name]!!
+
 			WebsocketsManager.notifyContact(userId1, userId2,
 				ContactBrief(
 					contactId,
-					username,
+					name,
 					userId,
 					"",
 					"",
 				), ContactBrief(
 					contactId,
-					newContactUsername,
+					newContactName,
 					newContactUserId,
 					"",
 					"",

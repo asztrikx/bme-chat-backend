@@ -24,9 +24,10 @@ fun Route.login() {
 			.iterator()
 
 		if (!iterator.hasNext()) {
+			// Retrofit doesn't support null response
 			call.respond<LoginResponse>(LoginResponse(
-				null,
-				null,
+				0,
+				"",
 			))
 			return@post
 		}
@@ -38,8 +39,8 @@ fun Route.login() {
 
 		if (!BCrypt.checkpw(loginRequest.password, passwordHash)) {
 			call.respond<LoginResponse>(LoginResponse(
-				null,
-				null,
+				0,
+				"",
 			))
 			return@post
 		}

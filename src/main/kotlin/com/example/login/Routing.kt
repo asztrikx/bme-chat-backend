@@ -2,9 +2,7 @@ package com.example.login
 
 import com.example.database
 import com.example.session.*
-import com.example.user.User
 import com.example.user.UserSchema
-import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*

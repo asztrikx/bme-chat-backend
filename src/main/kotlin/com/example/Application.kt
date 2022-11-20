@@ -15,18 +15,19 @@ import java.time.Duration
 // Entities are avoided as they don't work with serialization
 
 val database = Database.connect(
-    url="jdbc:sqlite:/mnt/hdd/File/Study/BME/Szabvál/Kotlin/hf/ChatBackend/chat.db",
+    url="jdbc:sqlite:./chat.db",
 )
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
+        // routing uses websocket, so it has to be installed earlier...
         install(WebSockets) {
             pingPeriod = Duration.ofSeconds(15)
             timeout = Duration.ofSeconds(15)
             maxFrameSize = Long.MAX_VALUE
             masking = false
             contentConverter = GsonWebsocketContentConverter()
-        } // routing uses this, so it has to be installed earlier...
+        }
         configureSecurity()
         configureRouting()
         install(ContentNegotiation) {

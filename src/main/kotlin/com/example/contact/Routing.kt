@@ -16,7 +16,7 @@ import kotlin.math.min as mathMin
 // Ktor doesn't interpret String JSONs correctly
 suspend fun ApplicationCall.receiveString(): String {
 	val text = receive<String>()
-	return text.drop(1).dropLast(1) // TODO oneliner doesnt work
+	return text.drop(1).dropLast(1)
 }
 
 fun Route.contact() {
@@ -59,7 +59,7 @@ fun Route.contact() {
 						MessageSchema.contactId eq contactId
 					}
 					.orderBy(MessageSchema.id.desc())
-					//limit not supported in SQLite
+					// .limit(1) not supported in SQLite
 					.iterator()
 
 				contactBriefs += if (!messageRows.hasNext()) {

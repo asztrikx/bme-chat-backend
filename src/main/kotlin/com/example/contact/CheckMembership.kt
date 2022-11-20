@@ -3,6 +3,9 @@ package com.example.contact
 import com.example.database
 import org.ktorm.dsl.*
 
+/**
+ * @return: null if not part of contact otherwise the other members id is returned
+ */
 fun getOtherContactMember(userId: Int, contactId: Int): Int? {
 	val rows = database
 		.from(ContactSchema)

@@ -17,7 +17,7 @@ fun Route.register() {
 		val registerRequest = call.receive<RegisterRequest>()
 
 		// do not run in transaction to avoid errors
-		val passwordHash = BCrypt.hashpw(registerRequest.password, BCrypt.gensalt()); // lehet overkill ha más magyar rendszerekben md5-öt használnak...
+		val passwordHash = BCrypt.hashpw(registerRequest.password, BCrypt.gensalt());
 
 		database.useTransaction {
 			// username collision

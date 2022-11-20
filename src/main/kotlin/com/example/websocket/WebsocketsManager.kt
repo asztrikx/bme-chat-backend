@@ -19,7 +19,7 @@ object WebsocketsManager {
 	}
 
 	fun addConnection(userId:Int, session: DefaultWebSocketServerSession) {
-		connections.put(userId, session)
+		connections[userId] = session
 	}
 
 	suspend fun removeConnection(userId: Int) {

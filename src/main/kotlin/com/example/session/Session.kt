@@ -10,34 +10,10 @@ data class Session (
     val userId: Int,
     val token: String,
 ) {
-    constructor(row: QueryRowSet): this(
-        row[SessionSchema.id]!!,
-        row[SessionSchema.userId]!!,
-        row[SessionSchema.token]!!,
-    )
     companion object
 }
 
 const val TOKEN_SIZE = 256
-
-fun String.Companion.randomBase64(size: Int): String {
-    val bytes = ByteArray(size)
-    SecureRandom.getInstanceStrong().nextBytes(bytes)
-    return Base64.getEncoder().encodeToString(bytes)
-}
-
-fun String.secureCompare(other: String): Boolean {
-    if (length != other.length) {
-        return false
-    }
-
-    var equals = true
-    for (i in 0 until length) {
-        // and: do not short circuit
-        equals = equals and (get(i) == other.get(i))
-    }
-    return equals
-}
 
 fun Session.Companion.validate(userId: Int, tokenCandidate: String): Boolean {
     // To avoid timing attack we can't filter for token

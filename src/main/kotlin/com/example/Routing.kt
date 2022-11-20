@@ -17,6 +17,7 @@ fun Application.configureRouting() {
                 logout()
                 contact()
                 message()
+                logout()
             }
             login()
             register()

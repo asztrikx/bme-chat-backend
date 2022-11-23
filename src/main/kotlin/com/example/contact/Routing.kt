@@ -143,7 +143,7 @@ fun Route.contact() {
 				.iterator()
 				.next()[UserSchema.name]!!
 
-			WebsocketsManager.notifyContact(userId1, userId2,
+			WebsocketsManager.notifyContact(newContactUserId, userId,
 				ContactBrief(
 					contactId,
 					name,
